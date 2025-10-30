@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Catalog | VIX Core Initiative</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Navigation Bar -->n
+        <nav class="navbar">
+            <div class="container">
+                <div class="nav-brand">
+                    <h1 class="brand-name">ShopVue</h1>
+                    <span class="brand-tagline">Modern E-Commerce</span>
+                </div>
+                <div class="nav-menu">
+                    <button @click="currentPage = 'home'" :class="{ active: currentPage === 'home' }" class="nav-link">
+                        Home
+                    </button>
+                    <button @click="currentPage = 'catalog'" :class="{ active: currentPage === 'catalog' }"
+                        class="nav-link">
+                        Catalog
+                    </button>
+                    <button @click="currentPage = 'cart'" :class="{ active: currentPage === 'cart' }"
+                        class="nav-link cart-link">
+                        <span class="cart-icon">🛒</span>
+                        Cart
+                        <span v-if="cartItemsCount > 0" class="cart-badge">{{ cartItemsCount }}</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Home Page -->
+        <div v-if="currentPage === 'home'" class="page home-page">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="container">
+                    <div class="hero-content">
+                        <div class="hero-text">
+                            <h1 class="hero-title">Discover Amazing Products</h1>
+                            <p class="hero-subtitle">Explore our curated collection of premium fashion, electronics, and
+                                jewelry. Find exactly what you're looking for with our modern shopping experience.</p>
+
+                        </div>
+                        <div class="hero-image">
+                            <div class="hero-graphic">
+                                <div class="floating-card card-1">🛍️</div>
+                                <div class="floating-card card-2">👕</div>
+                                <div class="floating-card card-3">💎</div>
+                                <div class="floating-card card-4">📱</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Featured Product Card Section -->
+            <section class="featured-product-section" id="preview">
+                <div class="container">
+                    <div class="section-header">
+                        <h2 class="section-title">Featured Product</h2>
+                        <p class="section-subtitle">Discover our handpicked product of the moment</p>
+                    </div>
+
+                    <div v-if="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading featured product...</p>
+                    </div>
+
+                    <div v-else-if="currentFeaturedProduct" class="featured-card-container">
+                        <div class="featured-card" @click="viewProduct(currentFeaturedProduct)">
+                            <div class="featured-image">
+                                <img :src="currentFeaturedProduct.image" :alt="currentFeaturedProduct.title" />
+                                <div class="featured-overlay">
+                                    <span class="featured-action">View Details</span>
+                                    <button @click.stop="quickAddToCart(currentFeaturedProduct)"
+                                        class="featured-quick-add">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="featured-info">
+                                <div class="featured-category-wrapper">
+                                    <span class="featured-category">{{ formatCategory(currentFeaturedProduct.category)
+                                        }}</span>
+                                </div>
+                                <h3 class="featured-title">{{ currentFeaturedProduct.title }}</h3>
+                                <div class="featured-rating">
+                                    <div class="stars">
+                                        <span v-for="star in 5" :key="star" class="star"
+                                            :class="{ active: star <= Math.round(currentFeaturedProduct.rating.rate) }">
+                                            ★
+                                        </span>
+                                    </div>
+                                    <span class="rating-text">{{ currentFeaturedProduct.rating.rate }} ({{
+                                        currentFeaturedProduct.rating.count }} reviews)</span>
+                                </div>
+                                <p class="featured-description">{{
+                                    truncateDescription(currentFeaturedProduct.description, 150) }}</p>
+                                <div class="featured-price">${{ currentFeaturedProduct.price }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Controls -->
+                        <div class="featured-navigation">
+                            <button @click="previousFeaturedProduct" class="featured-nav-btn prev-btn">
+                                ‹
+                            </button>
+                            <button @click="nextFeaturedProduct" class="featured-nav-btn next-btn">
+                                ›
+                            </button>
+                        </div>
+
+
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Catalog Page -->
+        <div v-if="currentPage === 'catalog'" class="page catalog-page">
+            <div class="container">
+                <div class="page-header">
+                    <h1 class="page-title">Product Catalog</h1>
+                    <p class="page-subtitle">Browse our complete collection</p>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="catalog-filters">
+                    <button @click="filterByCategory('all')" :class="{ active: selectedCategory === 'all' }"
+                        class="filter-btn">
+                        All Products
+                    </button>
+                    <button @click="filterByCategory('men\'s clothing')"
+                        :class="{ active: selectedCategory === 'men\'s clothing' }" class="filter-btn">
+                        Men's Clothing
+                    </button>
+                    <button @click="filterByCategory('women\'s clothing')"
+                        :class="{ active: selectedCategory === 'women\'s clothing' }" class="filter-btn">
+                        Women's Clothing
+                    </button>
+                    <button @click="filterByCategory('jewelery')" :class="{ active: selectedCategory === 'jewelery' }"
+                        class="filter-btn">
+                        Jewelry
+                    </button>
+                    <button @click="filterByCategory('electronics')"
+                        :class="{ active: selectedCategory === 'electronics' }" class="filter-btn">
+                        Electronics
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div v-if="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading products...</p>
+                </div>
+
+                <!-- Products Grid -->
+                <div v-else class="catalog-grid">
+                    <div v-for="product in filteredProducts" :key="product.id" class="catalog-card"
+                        @click="selectProduct(product)">
+                        <div class="catalog-image">
+                            <img :src="product.image" :alt="product.title" />
+                            <div class="catalog-overlay">
+                                <button @click.stop="quickAddToCart(product)" class="quick-add-btn">
+                                    Quick Add
+                                </button>
+                            </div>
+                        </div>
+                        <div class="catalog-info">
+                            <span class="catalog-category">{{ formatCategory(product.category) }}</span>
+                            <h3 class="catalog-title">{{ truncateTitle(product.title) }}</h3>
+                            <div class="catalog-rating">
+                                <div class="stars">
+                                    <span v-for="star in 5" :key="star" class="star"
+                                        :class="{ active: star <= Math.round(product.rating.rate) }">
+                                        ★
+                                    </span>
+                                </div>
+                                <span class="rating-text">{{ product.rating.rate }}</span>
+                            </div>
+                            <div class="catalog-price">${{ product.price }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Detail Modal -->
+                <div v-if="selectedProduct" class="modal-overlay" @click="closeModal">
+                    <div class="modal-content" @click.stop>
+                        <button @click="closeModal" class="modal-close">×</button>
+                        <div class="modal-body">
+                            <div class="modal-image">
+                                <img :src="selectedProduct.image" :alt="selectedProduct.title" />
+                            </div>
+                            <div class="modal-info">
+                                <span class="modal-category">{{ formatCategory(selectedProduct.category) }}</span>
+                                <h2 class="modal-title">{{ selectedProduct.title }}</h2>
+                                <p class="modal-description">{{ selectedProduct.description }}</p>
+
+                                <!-- Color Palette -->
+                                <div class="color-palette">
+                                    <h4>Available Colors:</h4>
+                                    <div class="color-options">
+                                        <div v-for="(color, index) in getProductColors(selectedProduct.category)"
+                                            :key="index" class="color-swatch" :style="{ backgroundColor: color.hex }"
+                                            :title="color.name" :class="{ selected: selectedColor.name === color.name }"
+                                            @click="selectColor(color)">
+                                        </div>
+                                    </div>
+                                    <span class="selected-color">Selected: {{ selectedColor.name }}</span>
+                                </div>
+
+                                <div class="modal-rating">
+                                    <div class="stars">
+                                        <span v-for="star in 5" :key="star" class="star"
+                                            :class="{ active: star <= Math.round(selectedProduct.rating.rate) }">
+                                            ★
+                                        </span>
+                                    </div>
+                                    <span class="rating-text">{{ selectedProduct.rating.rate }} ({{
+                                        selectedProduct.rating.count }} reviews)</span>
+                                </div>
+
+                                <div class="modal-price">${{ selectedProduct.price }}</div>
+
+                                <div class="modal-actions">
+                                    <button @click="buyNow" class="btn btn-primary btn-large">
+                                        Buy Now
+                                    </button>
+                                    <button @click="addToCart" class="btn btn-outline btn-large">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Page -->
+        <div v-if="currentPage === 'cart'" class="page cart-page">
+            <div class="container">
+                <div class="page-header">
+                    <h1 class="page-title">Shopping Cart</h1>
+                    <p class="page-subtitle">Review your selected items</p>
+                </div>
+
+                <div v-if="cartItems.length === 0" class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <h2>Your cart is empty</h2>
+                    <p>Start shopping to add items to your cart</p>
+                    <button @click="currentPage = 'catalog'" class="btn btn-primary">
+                        Browse Products
+                    </button>
+                </div>
+
+                <div v-else class="cart-content">
+                    <div class="cart-items">
+                        <div v-for="item in cartItems" :key="item.id + '-' + item.color" class="cart-item">
+                            <div class="cart-item-image">
+                                <img :src="item.image" :alt="item.title" />
+                            </div>
+                            <div class="cart-item-info">
+                                <h3 class="cart-item-title">{{ item.title }}</h3>
+                                <p class="cart-item-color">Color: {{ item.color }}</p>
+                                <div class="cart-item-price">${{ item.price }}</div>
+                            </div>
+                            <div class="cart-item-controls">
+                                <div class="quantity-controls">
+                                    <button @click="updateQuantity(item, -1)" class="quantity-btn">-</button>
+                                    <span class="quantity">{{ item.quantity }}</span>
+                                    <button @click="updateQuantity(item, 1)" class="quantity-btn">+</button>
+                                </div>
+                                <button @click="removeFromCart(item)" class="remove-btn">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-summary">
+                        <div class="summary-card">
+                            <h3>Order Summary</h3>
+                            <div class="summary-line">
+                                <span>Subtotal ({{ totalItems }} items)</span>
+                                <span>${{ subtotal.toFixed(2) }}</span>
+                            </div>
+                            <div class="summary-line">
+                                <span>Shipping</span>
+                                <span>Free</span>
+                            </div>
+                            <div class="summary-line total">
+                                <span>Total</span>
+                                <span>${{ subtotal.toFixed(2) }}</span>
+                            </div>
+                            <button @click="checkout" class="btn btn-primary btn-large checkout-btn">
+                                Proceed to Checkout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <h3>ShopVue</h3>
+                        <p>Modern e-commerce experience built with Vue.js</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="#" @click="currentPage = 'home'">Home</a></li>
+                            <li><a href="#" @click="currentPage = 'catalog'">Catalog</a></li>
+                            <li><a href="#" @click="currentPage = 'cart'">Cart</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Categories</h4>
+                        <ul>
+                            <li><a href="#" @click="goToCatalog('men\'s clothing')">Men's Clothing</a></li>
+                            <li><a href="#" @click="goToCatalog('women\'s clothing')">Women's Clothing</a></li>
+                            <li><a href="#" @click="goToCatalog('electronics')">Electronics</a></li>
+                            <li><a href="#" @click="goToCatalog('jewelery')">Jewelry</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2024 VIX Core Initiative - Rakamin Academy Final Task</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Vue.js 2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>
